@@ -1,67 +1,79 @@
 #include "plugin.h"
 #include "common.h"
-#include "CHud.h"
-#include "CMenuManager.h"
+#include "CHud.h" // CHud::SetHelpMessage
+#include "CMenuManager.h" // FrontEndMenuManager.drawRadarOrMap
 #include "CPickups.h"
 #include "CRadar.h"
-#include "CTimer.h"
+#include "CTimer.h" // CTimer::m_snTimeInMilliseconds
 
 #include "Util.h"
 
-bool modEnabled = true;
-//bool showTags = true;
-//bool showUSJs = true;
-//bool showOysters = true;
-//bool showSnapshots = true;
-//bool showHorseshoes = true;
+// TODO:
+// INI file: trace colors, on/off key, show tags not completely painted
+// 228 = 1.f alpha
+// ...
+// 255 = 0.f alpha // don't draw
 
 class CollectiblesOnRadar
 {
+private:
+    static const CRGBA COLOR_TAG;
+    static const CRGBA COLOR_USJ_UNDONE;
+    static const CRGBA COLOR_USJ_FOUND;
+    static const CRGBA COLOR_OYSTER;
+    static const CRGBA COLOR_HORSE;
+    static const CRGBA COLOR_SNAP;
+
+    static bool s_modEnabled;
+    static int s_keyPressTime;
+
 public:
     CollectiblesOnRadar()
     {
-        static int keyPressTime = 0;
+        //AllocConsole();
+        //FILE* f = new FILE;
+        //freopen_s(&f, "CONOUT$", "w", stdout);
 
         plugin::Events::gameProcessEvent += []
         {
-            if (plugin::KeyPressed(VK_F1) && CTimer::m_snTimeInMilliseconds - keyPressTime > 200)
+            if (plugin::KeyPressed(VK_F12) && CTimer::m_snTimeInMilliseconds - s_keyPressTime > 200)
             {
-                modEnabled = !modEnabled;
-                CHud::SetHelpMessage(modEnabled ? "Collectibles on radar activated" : "Collectibles on radar deactivated", true, false, false);
-                //CMessages::AddMessageJumpQ(modEnabled ? "Collectibles on radar activated" : "Collectibles on radar deactivated", 2000, false, false);
-                keyPressTime = CTimer::m_snTimeInMilliseconds;
+                s_modEnabled = !s_modEnabled;
+                CHud::SetHelpMessage(s_modEnabled ? "Collectibles on radar ON" : "Collectibles on radar OFF", true, false, false);
+                s_keyPressTime = CTimer::m_snTimeInMilliseconds;
             }
         };
 
         plugin::Events::drawBlipsEvent += []
         {
             CPlayerPed* playa = FindPlayerPed();
-            if (playa && modEnabled)
+            if (s_modEnabled && playa)
             {
                 const CVector& playaPos = FindPlayerCentreOfWorld_NoSniperShift(0);
-                if (!FrontEndMenuManager.drawRadarOrMap)
+                if (!FrontEndMenuManager.drawRadarOrMap) // radar
                 {
                     if (playa->m_nAreaCode == 0)
                     {
-                        drawRadarTags(playaPos); // tags
+                        drawRadarTags(playaPos);
                         drawRadarPickups(playaPos); // oysters, horseshoes and snapshots
-                        drawRadarUSJ(playaPos); // USJs
+                        drawRadarUSJ(playaPos);
                     }
                 }
-                else
+                else // map
                 {
-                    drawMapTags(playaPos, playa->m_nAreaCode); // tags
-                    drawMapPickups(playaPos, playa->m_nAreaCode); // oysters, horseshoes and snapshots
-                    drawMapUSJ(playaPos, playa->m_nAreaCode); // USJs
+                    const bool showHeight = playa->m_nAreaCode == 0;
+                    drawMapTags(playaPos, showHeight);
+                    drawMapPickups(playaPos, showHeight); // oysters, horseshoes and snapshots
+                    drawMapUSJ(playaPos, showHeight);
                 }
             }
         };
     }
 
+private:
     static void drawRadarTags(const CVector& playaPos)
     {
         static CVector2D radarSpace, screenSpace;
-        static const CRGBA colorTag(85, 255, 85);
 
         bool drawTag = true;
         float nearestTag = 9999999.f;
@@ -73,8 +85,6 @@ public:
 
             if (Util::s_tagList[i].tag == nullptr) // DEBUG
             {
-                //lg << "[ERROR] Util::s_tagList[" << i << "].tag == nullptr" << "\n";
-                //lg.flush();
                 continue;
             }
 
@@ -83,7 +93,7 @@ public:
             if (distance < CRadar::m_radarRange)
             {
                 CRadar::TransformRealWorldPointToRadarSpace(radarSpace, CVector2D(tagPos));
-                CRadar::LimitRadarPoint(radarSpace); // inside range anyway, returns distance (1.f for radar radius)
+                //CRadar::LimitRadarPoint(radarSpace); // inside range anyway (returns distance)
                 CRadar::TransformRadarPointToScreenSpace(screenSpace, radarSpace);
 
                 int mode = RADAR_TRACE_LOW;
@@ -95,11 +105,11 @@ public:
 
                 drawTag = false;
 
-                CRadar::ShowRadarTraceWithHeight(screenSpace.x, screenSpace.y, 1, colorTag.r, colorTag.g, colorTag.b, colorTag.a, mode);
+                CRadar::ShowRadarTraceWithHeight(screenSpace.x, screenSpace.y, 1, COLOR_TAG.r, COLOR_TAG.g, COLOR_TAG.b, COLOR_TAG.a, mode);
             }
             else
             {
-                if (distance < nearestTag)
+                if (drawTag && distance < nearestTag)
                 {
                     nearestTag = distance;
                     indexTag = i;
@@ -107,41 +117,35 @@ public:
             }
         }
 
-        if (drawTag && indexTag >= 0) // if there's no tag on range and found the closest tag, draw it
+        if (drawTag && indexTag >= 0) // if there's no tag in range and found a nearest tag, draw it
         {
             if (Util::s_tagList[indexTag].tag == nullptr) // DEBUG
             {
-                //lg << "[ERROR] Util::s_tagList[" << indexTag << "].tag == nullptr" << "\n";
-                //lg.flush();
+                return;
             }
-            else
+
+            const CVector& tagPos = Util::s_tagList[indexTag].tag->pos;
+
+            CRadar::TransformRealWorldPointToRadarSpace(radarSpace, CVector2D(tagPos));
+            CRadar::LimitRadarPoint(radarSpace);
+            CRadar::TransformRadarPointToScreenSpace(screenSpace, radarSpace);
+
+            int mode = RADAR_TRACE_LOW;
+            if (tagPos.z - playaPos.z <= 2.0f)
             {
-                const CVector& tagPos = Util::s_tagList[indexTag].tag->pos;
-
-                CRadar::TransformRealWorldPointToRadarSpace(radarSpace, CVector2D(tagPos));
-                CRadar::LimitRadarPoint(radarSpace);
-                CRadar::TransformRadarPointToScreenSpace(screenSpace, radarSpace);
-
-                int mode = RADAR_TRACE_LOW;
-                if (tagPos.z - playaPos.z <= 2.0f)
-                {
-                    if (tagPos.z - playaPos.z < -4.0f) mode = RADAR_TRACE_HIGH;
-                    else mode = RADAR_TRACE_NORMAL;
-                }
-
-                CRadar::ShowRadarTraceWithHeight(screenSpace.x, screenSpace.y, 1, colorTag.r, colorTag.g, colorTag.b, colorTag.a, mode);
+                if (tagPos.z - playaPos.z < -4.0f) mode = RADAR_TRACE_HIGH;
+                else mode = RADAR_TRACE_NORMAL;
             }
+
+            CRadar::ShowRadarTraceWithHeight(screenSpace.x, screenSpace.y, 1, COLOR_TAG.r, COLOR_TAG.g, COLOR_TAG.b, COLOR_TAG.a, mode);
         }
     }
 
     static void drawRadarPickups(const CVector& playaPos)
     {
         static CVector2D radarSpace, screenSpace;
-        static const CRGBA colorOyster(255, 255, 153);
-        static const CRGBA colorHorse(147, 192, 238);
-        static const CRGBA colorSnap(255, 161, 208);
 
-        bool drawOyster = true; // draw the nearest pickup outside range?
+        bool drawOyster = true; // draw the nearest pickup outside range
         bool drawHorse = true;
         bool drawSnap = true;
 
@@ -165,7 +169,7 @@ public:
                 if (distance < CRadar::m_radarRange)
                 {
                     CRadar::TransformRealWorldPointToRadarSpace(radarSpace, CVector2D(pickupPos));
-                    //CRadar::LimitRadarPoint(radarSpace); // inside range anyway
+                    //CRadar::LimitRadarPoint(radarSpace); // inside range anyway (returns distance)
                     CRadar::TransformRadarPointToScreenSpace(screenSpace, radarSpace);
 
                     int mode = RADAR_TRACE_LOW;
@@ -179,15 +183,15 @@ public:
                     switch (model)
                     {
                     case 953:
-                        color = colorOyster;
+                        color = COLOR_OYSTER;
                         drawOyster = false;
                         break;
                     case 954:
-                        color = colorHorse;
+                        color = COLOR_HORSE;
                         drawHorse = false;
                         break;
                     case 1253:
-                        color = colorSnap;
+                        color = COLOR_SNAP;
                         drawSnap = false;
                         break;
                     }
@@ -199,21 +203,21 @@ public:
                     switch (model)
                     {
                     case 953: // oyster
-                        if (distance < nearestOyster)
+                        if (drawOyster && distance < nearestOyster)
                         {
                             nearestOyster = distance;
                             indexOyster = i;
                         }
                         break;
                     case 954: // horse
-                        if (distance < nearestHorse)
+                        if (drawHorse && distance < nearestHorse)
                         {
                             nearestHorse = distance;
                             indexHorse = i;
                         }
                         break;
                     case 1253: // snap
-                        if (distance < nearestSnap)
+                        if (drawSnap && distance < nearestSnap)
                         {
                             nearestSnap = distance;
                             indexSnap = i;
@@ -239,7 +243,7 @@ public:
                 else mode = RADAR_TRACE_NORMAL;
             }
 
-            CRadar::ShowRadarTraceWithHeight(screenSpace.x, screenSpace.y, 1, colorOyster.r, colorOyster.g, colorOyster.b, colorOyster.a, mode);
+            CRadar::ShowRadarTraceWithHeight(screenSpace.x, screenSpace.y, 1, COLOR_OYSTER.r, COLOR_OYSTER.g, COLOR_OYSTER.b, COLOR_OYSTER.a, mode);
         }
 
         if (drawHorse && indexHorse >= 0)
@@ -257,7 +261,7 @@ public:
                 else mode = RADAR_TRACE_NORMAL;
             }
 
-            CRadar::ShowRadarTraceWithHeight(screenSpace.x, screenSpace.y, 1, colorHorse.r, colorHorse.g, colorHorse.b, colorHorse.a, mode);
+            CRadar::ShowRadarTraceWithHeight(screenSpace.x, screenSpace.y, 1, COLOR_HORSE.r, COLOR_HORSE.g, COLOR_HORSE.b, COLOR_HORSE.a, mode);
         }
 
         if (drawSnap && indexSnap >= 0)
@@ -275,25 +279,23 @@ public:
                 else mode = RADAR_TRACE_NORMAL;
             }
 
-            CRadar::ShowRadarTraceWithHeight(screenSpace.x, screenSpace.y, 1, colorSnap.r, colorSnap.g, colorSnap.b, colorSnap.a, mode);
+            CRadar::ShowRadarTraceWithHeight(screenSpace.x, screenSpace.y, 1, COLOR_SNAP.r, COLOR_SNAP.g, COLOR_SNAP.b, COLOR_SNAP.a, mode);
         }
     }
 
     static void drawRadarUSJ(const CVector& playaPos)
     {
         static CVector2D radarSpace, screenSpace;
-        static const CRGBA colorUndone(204, 153, 255);
-        static const CRGBA colorFound(222, 136, 255);
 
         bool drawUsj = true;
         float nearestUsj = 9999999.f;
         int indexUsj = -1;
 
-        for (int i = 0; i < (Util::s_usjPool)->size; i++)
+        for (int i = 0; i < Util::ms_pUsjPool->m_nSize; i++)
         {
-            const tUsj& usj = (Util::s_usjPool)->entries[i];
+            const tUsj& usj = Util::ms_pUsjPool->m_pObjects[i];
 
-            if ((Util::s_usjPool)->flags[i] == 0x01 && !usj.done)
+            if (!Util::ms_pUsjPool->m_byteMap[i].bEmpty && !usj.done)
             {
                 const CVector usjPos(
                     (usj.start1.x + usj.start2.x) / 2.f,
@@ -303,7 +305,7 @@ public:
                 if (distance < CRadar::m_radarRange)
                 {
                     CRadar::TransformRealWorldPointToRadarSpace(radarSpace, CVector2D(usjPos));
-                    CRadar::LimitRadarPoint(radarSpace);
+                    //CRadar::LimitRadarPoint(radarSpace); // inside range anyway (returns distance)
                     CRadar::TransformRadarPointToScreenSpace(screenSpace, radarSpace);
 
                     int mode = RADAR_TRACE_LOW;
@@ -313,10 +315,10 @@ public:
                         else mode = RADAR_TRACE_NORMAL;
                     }
 
-                    static const CRGBA* color = &colorUndone;
+                    const CRGBA* color = &COLOR_USJ_UNDONE;
                     if (usj.found)
                     {
-                        color = &colorFound;
+                        color = &COLOR_USJ_FOUND;
                     }
 
                     drawUsj = false;
@@ -325,7 +327,7 @@ public:
                 }
                 else
                 {
-                    if (distance < nearestUsj)
+                    if (drawUsj && distance < nearestUsj)
                     {
                         nearestUsj = distance;
                         indexUsj = i;
@@ -336,7 +338,7 @@ public:
 
         if (drawUsj && indexUsj >= 0)
         {
-            const tUsj& usj = (Util::s_usjPool)->entries[indexUsj];
+            const tUsj& usj = Util::ms_pUsjPool->m_pObjects[indexUsj];
 
             const CVector usjPos(
                 (usj.start1.x + usj.start2.x) / 2.f,
@@ -354,10 +356,10 @@ public:
                 else mode = RADAR_TRACE_NORMAL;
             }
 
-            const CRGBA* color = &colorUndone;
+            const CRGBA* color = &COLOR_USJ_UNDONE;
             if (usj.found)
             {
-                color = &colorFound;
+                color = &COLOR_USJ_FOUND;
             }
 
             CRadar::ShowRadarTraceWithHeight(screenSpace.x, screenSpace.y, 1, color->r, color->g, color->b, color->a, mode);
@@ -366,17 +368,14 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    static void drawMapTags(const CVector& playaPos, unsigned char areaCode)
+    static void drawMapTags(const CVector& playaPos, bool showHeight)
     {
         static CVector2D radarSpace, screenSpace;
-        static const CRGBA colorTag(85, 255, 85);
 
         for (int i = 0; i < Util::s_totalTags; i++)
         {
             if (Util::s_tagList[i].tag == nullptr) // DEBUG
             {
-                //lg << "Util::s_tagList[" << i << "].tag == nullptr" << "\n";
-                //lg.flush();
                 continue;
             }
 
@@ -385,11 +384,11 @@ public:
             const CVector& tagPos = Util::s_tagList[i].tag->pos;
 
             CRadar::TransformRealWorldPointToRadarSpace(radarSpace, CVector2D(tagPos));
-            CRadar::LimitRadarPoint(radarSpace);
+            //CRadar::LimitRadarPoint(radarSpace); // does nothing in map
             CRadar::TransformRadarPointToScreenSpace(screenSpace, radarSpace);
 
             int mode = RADAR_TRACE_LOW;
-            if (areaCode != 0)
+            if (!showHeight)
             {
                 mode = RADAR_TRACE_NORMAL;
             }
@@ -399,16 +398,13 @@ public:
                 else mode = RADAR_TRACE_NORMAL;
             }
 
-            CRadar::ShowRadarTraceWithHeight(screenSpace.x, screenSpace.y, 1, colorTag.r, colorTag.g, colorTag.b, colorTag.a, mode);
+            CRadar::ShowRadarTraceWithHeight(screenSpace.x, screenSpace.y, 1, COLOR_TAG.r, COLOR_TAG.g, COLOR_TAG.b, COLOR_TAG.a, mode);
         }
     }
 
-    static void drawMapPickups(const CVector& playaPos, unsigned char areaCode)
+    static void drawMapPickups(const CVector& playaPos, bool showHeight)
     {
         static CVector2D radarSpace, screenSpace;
-        static const CRGBA colorOyster(255, 255, 153);
-        static const CRGBA colorHorse(147, 192, 238);
-        static const CRGBA colorSnap(255, 161, 208);
 
         for (int i = 0; i < static_cast<int>(MAX_NUM_PICKUPS); i++)
         {
@@ -420,11 +416,11 @@ public:
                 const CVector pickupPos(CPickups::aPickUps[i].m_vecPos.Uncompressed());
 
                 CRadar::TransformRealWorldPointToRadarSpace(radarSpace, CVector2D(pickupPos));
-                CRadar::LimitRadarPoint(radarSpace);
+                //CRadar::LimitRadarPoint(radarSpace); // does nothing in map
                 CRadar::TransformRadarPointToScreenSpace(screenSpace, radarSpace);
 
                 int mode = RADAR_TRACE_LOW;
-                if (areaCode != 0)
+                if (!showHeight)
                 {
                     mode = RADAR_TRACE_NORMAL;
                 }
@@ -438,13 +434,13 @@ public:
                 switch (model)
                 {
                 case 953:
-                    color = colorOyster;
+                    color = COLOR_OYSTER;
                     break;
                 case 954:
-                    color = colorHorse;
+                    color = COLOR_HORSE;
                     break;
                 case 1253:
-                    color = colorSnap;
+                    color = COLOR_SNAP;
                     break;
                 }
 
@@ -453,17 +449,15 @@ public:
         }
     }
 
-    static void drawMapUSJ(const CVector& playaPos, unsigned char areaCode)
+    static void drawMapUSJ(const CVector& playaPos, bool showHeight)
     {
         static CVector2D radarSpace, screenSpace;
-        static const CRGBA colorUndone(204, 153, 255);
-        static const CRGBA colorFound(222, 136, 255);
 
-        for (int i = 0; i < (Util::s_usjPool)->size; i++)
+        for (int i = 0; i < Util::ms_pUsjPool->m_nSize; i++)
         {
-            const tUsj& usj = (Util::s_usjPool)->entries[i];
+            const tUsj& usj = Util::ms_pUsjPool->m_pObjects[i];
 
-            if ((Util::s_usjPool)->flags[i] == 0x01 && !usj.done)
+            if (!Util::ms_pUsjPool->m_byteMap[i].bEmpty && !usj.done)
             {
                 const CVector usjPos(
                     (usj.start1.x + usj.start2.x) / 2.f,
@@ -471,11 +465,11 @@ public:
                     usj.start1.z);
 
                 CRadar::TransformRealWorldPointToRadarSpace(radarSpace, CVector2D(usjPos));
-                CRadar::LimitRadarPoint(radarSpace);
+                //CRadar::LimitRadarPoint(radarSpace); // does nothing in map
                 CRadar::TransformRadarPointToScreenSpace(screenSpace, radarSpace);
 
                 int mode = RADAR_TRACE_LOW;
-                if (areaCode != 0)
+                if (!showHeight)
                 {
                     mode = RADAR_TRACE_NORMAL;
                 }
@@ -485,10 +479,10 @@ public:
                     else mode = RADAR_TRACE_NORMAL;
                 }
 
-                const CRGBA* color = &colorUndone;
+                const CRGBA* color = &COLOR_USJ_UNDONE;
                 if (usj.found)
                 {
-                    color = &colorFound;
+                    color = &COLOR_USJ_FOUND;
                 }
 
                 CRadar::ShowRadarTraceWithHeight(screenSpace.x, screenSpace.y, 1, color->r, color->g, color->b, color->a, mode);
@@ -496,3 +490,13 @@ public:
         }
     }
 } collectiblesOnRadar;
+
+const CRGBA CollectiblesOnRadar::COLOR_TAG(85, 255, 85);
+const CRGBA CollectiblesOnRadar::COLOR_USJ_UNDONE(204, 153, 255);
+const CRGBA CollectiblesOnRadar::COLOR_USJ_FOUND(222, 136, 255);
+const CRGBA CollectiblesOnRadar::COLOR_OYSTER(255, 255, 153);
+const CRGBA CollectiblesOnRadar::COLOR_HORSE(147, 192, 238);
+const CRGBA CollectiblesOnRadar::COLOR_SNAP(255, 161, 208);
+
+bool CollectiblesOnRadar::s_modEnabled = true;
+int CollectiblesOnRadar::s_keyPressTime = 0;

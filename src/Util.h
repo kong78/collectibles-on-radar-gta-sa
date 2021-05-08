@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CVector.h"
+#include "CPool.h"
 
 // https://gtaforums.com/topic/194199-documenting-gta-sa-memory-addresses/page/12/?tab=comments#comment-3271047
 struct tTag // 53 bytes
@@ -30,31 +31,18 @@ struct tUsj
     char pad[2];
 };
 
-struct tUsjPool // TODO Use pool
-{
-    tUsj* entries;
-    unsigned char* flags; // 0x01 = in use, 0x80 = not in use // first bit is empty or not, rest is id (always 1?)
-    int size; // 256
-    int allocPtr; // first free
-
-    bool isEmpty(int pos)
-    {
-        return true;
-    }
-};
-
 class Util
 {
 public:
     static int& s_totalTags;
-    static int& s_tags;
     static tTagState* s_tagList; // static tTag s_tagList[100]
 
-    static int& s_usjFound;
-    static int& s_usjDone;
-    static tUsjPool*& s_usjPool;
+    static CPool<tUsj>*& ms_pUsjPool;
 
+    //static int& s_tags;
     //static int& s_photographs;
     //static int& s_horseshoes;
     //static int& s_oysters;
+    //static int& s_usjFound;
+    //static int& s_usjDone;
 };
