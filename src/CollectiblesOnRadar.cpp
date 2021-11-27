@@ -8,12 +8,6 @@
 
 #include "Util.h"
 
-// TODO:
-// INI file: trace colors, on/off key, show tags not completely painted
-// 228 = 1.f alpha
-// ...
-// 255 = 0.f alpha // don't draw
-
 class CollectiblesOnRadar
 {
 private:
@@ -33,6 +27,7 @@ public:
         //AllocConsole();
         //FILE* f = new FILE;
         //freopen_s(&f, "CONOUT$", "w", stdout);
+        //plugin::config_file config(PLUGIN_PATH(""));
 
         plugin::Events::gameProcessEvent += []
         {
@@ -49,8 +44,8 @@ public:
             CPlayerPed* playa = FindPlayerPed();
             if (s_modEnabled && playa)
             {
-                const CVector& playaPos = FindPlayerCentreOfWorld_NoSniperShift(0);
-                if (!FrontEndMenuManager.drawRadarOrMap) // radar
+                const CVector& playaPos = FindPlayerCentreOfWorld_NoSniperShift(0); // FindPlayerPed()->GetPosition()?
+                if (!FrontEndMenuManager.m_bDrawRadarOrMap) // radar
                 {
                     if (playa->m_nAreaCode == 0)
                     {
