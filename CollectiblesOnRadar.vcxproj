@@ -97,10 +97,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Settings.cpp" />
     <ClCompile Include="src\CollectiblesOnRadar.cpp" />
     <ClCompile Include="src\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\IniParser.h" />
+    <ClInclude Include="src\IniReader.h" />
+    <ClInclude Include="src\Settings.h" />
     <ClInclude Include="src\Util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

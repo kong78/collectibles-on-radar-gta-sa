@@ -3,8 +3,12 @@
   <ItemGroup>
     <ClCompile Include="src\Util.cpp" />
     <ClCompile Include="src\CollectiblesOnRadar.cpp" />
+    <ClCompile Include="src\Settings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Util.h" />
+    <ClInclude Include="src\Settings.h" />
+    <ClInclude Include="src\IniReader.h" />
+    <ClInclude Include="src\IniParser.h" />
   </ItemGroup>
 </Project>
