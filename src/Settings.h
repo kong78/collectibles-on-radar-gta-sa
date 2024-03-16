@@ -5,10 +5,13 @@
 class Settings
 {
 public:
+    static const std::string MAIN;
+    static const std::string COLORS;
+    static const std::string EXTRA;
+
     // Default values
 
     static const unsigned int KEY_CODE_ON_OFF;
-
     static const CRGBA COLOR_TAG;
     static const CRGBA COLOR_SNAPSHOT;
     static const CRGBA COLOR_HORSESHOE;
@@ -20,13 +23,11 @@ public:
     // [MAIN]
 
     static unsigned int s_keyCodeOnOff;
-
     static bool s_drawTags;
     static bool s_drawSnapshots;
     static bool s_drawHorseshoes;
     static bool s_drawOysters;
     static bool s_drawUSJs;
-
     static bool s_drawNearest;
 
     // [COLORS]
@@ -42,11 +43,11 @@ public:
     static bool s_drawBribes;
     static bool s_drawArmours;
     static bool s_drawWeapons;
-
     static CRGBA s_colorBribe;
     static CRGBA s_colorArmour;
     static CRGBA s_colorWeapon;
 
 public:
     static void read();
+    static unsigned int toRGBA(const std::string& str, unsigned int defaultValue);
 };
