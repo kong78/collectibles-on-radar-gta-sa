@@ -46,6 +46,8 @@ public:
     static CRGBA s_colorBribe;
     static CRGBA s_colorArmour;
     static CRGBA s_colorWeapon;
+    static bool s_enabledOnStartup;
+    static bool s_drawDroppedWeapons;
 
 public:
     static void read();

@@ -25,6 +25,7 @@ public:
         plugin::Events::initRwEvent += []
         {
             Settings::read();
+            s_modEnabled = Settings::s_enabledOnStartup;
         };
 
         plugin::Events::gameProcessEvent += []
@@ -173,13 +174,16 @@ private:
             const unsigned char type = CPickups::aPickUps[i].m_nPickupType;
             const bool disabled = static_cast<bool>(CPickups::aPickUps[i].m_nFlags.bDisabled);
 
+            boolean pickupOnStreet = (type == PICKUP_ON_STREET || type == PICKUP_ON_STREET_SLOW);
+            boolean pickupOnce = (type == PICKUP_ONCE || type == PICKUP_ONCE_TIMEOUT || type == PICKUP_ONCE_TIMEOUT_SLOW);
+
             if ((Settings::s_drawOysters && model == 953 && type == PICKUP_ONCE)
                 || (Settings::s_drawHorseshoes && model == 954 && type == PICKUP_ONCE)
                 || (Settings::s_drawSnapshots && model == 1253 && type == PICKUP_SNAPSHOT)
-                || ((type == PICKUP_ON_STREET || type == PICKUP_ON_STREET_SLOW) && !disabled
-                    && (model == 1247 && Settings::s_drawBribes
-                        || model == 1242 && Settings::s_drawArmours
-                        || (model >= 330 || model <= 372) && Settings::s_drawWeapons)))
+                || (!disabled
+                    && (pickupOnStreet && model == 1247 && Settings::s_drawBribes
+                        || pickupOnStreet && model == 1242 && Settings::s_drawArmours
+                        || (pickupOnStreet || Settings::s_drawDroppedWeapons && pickupOnce) && (model >= 330 && model <= 372) && Settings::s_drawWeapons)))
             {
                 const CVector pickupPos(CPickups::aPickUps[i].m_vecPos.Uncompressed());
                 if (pickupPos.z >= 960.f)
@@ -462,13 +466,16 @@ private:
             const unsigned char type = CPickups::aPickUps[i].m_nPickupType;
             const bool disabled = static_cast<bool>(CPickups::aPickUps[i].m_nFlags.bDisabled);
 
+            boolean pickupOnStreet = (type == PICKUP_ON_STREET || type == PICKUP_ON_STREET_SLOW);
+            boolean pickupOnce = (type == PICKUP_ONCE || type == PICKUP_ONCE_TIMEOUT || type == PICKUP_ONCE_TIMEOUT_SLOW);
+
             if ((Settings::s_drawOysters && model == 953 && type == PICKUP_ONCE)
                 || (Settings::s_drawHorseshoes && model == 954 && type == PICKUP_ONCE)
                 || (Settings::s_drawSnapshots && model == 1253 && type == PICKUP_SNAPSHOT)
-                || ((type == PICKUP_ON_STREET || type == PICKUP_ON_STREET_SLOW) && !disabled
-                    && (model == 1247 && Settings::s_drawBribes
-                        || model == 1242 && Settings::s_drawArmours
-                        || (model >= 330 || model <= 372) && Settings::s_drawWeapons)))
+                || (!disabled
+                    && (pickupOnStreet && model == 1247 && Settings::s_drawBribes
+                        || pickupOnStreet && model == 1242 && Settings::s_drawArmours
+                        || (pickupOnStreet || Settings::s_drawDroppedWeapons && pickupOnce) && (model >= 330 && model <= 372) && Settings::s_drawWeapons)))
             {
                 const CVector pickupPos(CPickups::aPickUps[i].m_vecPos.Uncompressed());
                 if (pickupPos.z >= 960.f)

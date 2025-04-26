@@ -8,13 +8,13 @@ const std::string Settings::EXTRA("EXTRA");
 
 // Default values
 
-const unsigned int Settings::KEY_CODE_ON_OFF = VK_F12;  // Default ON/OFF key
-const CRGBA Settings::COLOR_TAG(85, 255, 85);           // 1442797055
-const CRGBA Settings::COLOR_SNAPSHOT(255, 161, 208);    // -6172417
-const CRGBA Settings::COLOR_HORSESHOE(147, 192, 238);   // -1816072449
-const CRGBA Settings::COLOR_OYSTER(255, 255, 153);      // -26113
-const CRGBA Settings::COLOR_USJ(204, 153, 255);         // -862322689
-const CRGBA Settings::COLOR_USJ_FOUND(222, 136, 255);   // -561446913
+const unsigned int Settings::KEY_CODE_ON_OFF = VK_F12; // default ON/OFF key
+const CRGBA Settings::COLOR_TAG(85, 255, 85);
+const CRGBA Settings::COLOR_SNAPSHOT(255, 161, 208);
+const CRGBA Settings::COLOR_HORSESHOE(147, 192, 238);
+const CRGBA Settings::COLOR_OYSTER(255, 255, 153);
+const CRGBA Settings::COLOR_USJ(204, 153, 255);
+const CRGBA Settings::COLOR_USJ_FOUND(222, 136, 255);
 const CRGBA Settings::COLOR_DEFAULT(255, 255, 255);
 
 // [MAIN]
@@ -43,13 +43,15 @@ bool Settings::s_drawWeapons = false;
 CRGBA Settings::s_colorBribe(Settings::COLOR_DEFAULT);
 CRGBA Settings::s_colorArmour(Settings::COLOR_DEFAULT);
 CRGBA Settings::s_colorWeapon(Settings::COLOR_DEFAULT);
+bool Settings::s_enabledOnStartup = true;
+bool Settings::s_drawDroppedWeapons = false;
 
 void Settings::read() {
     CIniReader iniReader("");
 
     // [MAIN]
 
-    s_keyCodeOnOff = static_cast<unsigned int>(iniReader.ReadInteger("MAIN", "on_off_key", static_cast<int>(KEY_CODE_ON_OFF)));
+    s_keyCodeOnOff = static_cast<unsigned int>(iniReader.ReadInteger(MAIN, "on_off_key", static_cast<int>(KEY_CODE_ON_OFF)));
 
     s_drawTags = iniReader.ReadBoolean(MAIN, "show_tags", true);
     s_drawSnapshots = iniReader.ReadBoolean(MAIN, "show_snapshots", true);
@@ -76,6 +78,9 @@ void Settings::read() {
     s_colorBribe.Set(toRGBA(iniReader.ReadString(EXTRA, "color_bribe", ""), COLOR_DEFAULT.ToInt()));
     s_colorArmour.Set(toRGBA(iniReader.ReadString(EXTRA, "color_armour", ""), COLOR_DEFAULT.ToInt()));
     s_colorWeapon.Set(toRGBA(iniReader.ReadString(EXTRA, "color_weapon", ""), COLOR_DEFAULT.ToInt()));
+
+    s_enabledOnStartup = iniReader.ReadBoolean(EXTRA, "enabled_on_startup", true);
+    s_drawDroppedWeapons = iniReader.ReadBoolean(EXTRA, "draw_dropped_weapons", false);
 }
 
 unsigned int Settings::toRGBA(const std::string& str, unsigned int defaultValue)
