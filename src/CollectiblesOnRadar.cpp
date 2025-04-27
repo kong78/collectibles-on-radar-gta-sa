@@ -90,11 +90,12 @@ private:
             }
 
             const CVector& tagPos = Util::s_tagList[i].tag->pos;
+
+            CRadar::TransformRealWorldPointToRadarSpace(radarSpace, CVector2D(tagPos));
+            const float mag = CRadar::LimitRadarPoint(radarSpace); // returns distance
             const float distance = DistanceBetweenPoints(CVector2D(playaPos), CVector2D(tagPos));
-            if (distance < CRadar::m_radarRange)
+            if (mag <= 1.f) // (distance < CRadar::m_radarRange)
             {
-                CRadar::TransformRealWorldPointToRadarSpace(radarSpace, CVector2D(tagPos));
-                //CRadar::LimitRadarPoint(radarSpace); // inside range already // returns distance
                 CRadar::TransformRadarPointToScreenSpace(screenSpace, radarSpace);
 
                 int mode = RADAR_TRACE_LOW;
@@ -191,11 +192,11 @@ private:
                     continue;
                 }
 
+                CRadar::TransformRealWorldPointToRadarSpace(radarSpace, CVector2D(pickupPos));
+                const float mag = CRadar::LimitRadarPoint(radarSpace); // returns distance
                 const float distance = DistanceBetweenPoints(CVector2D(playaPos), CVector2D(pickupPos));
-                if (distance < CRadar::m_radarRange)
+                if (mag <= 1.f) // (distance < CRadar::m_radarRange)
                 {
-                    CRadar::TransformRealWorldPointToRadarSpace(radarSpace, CVector2D(pickupPos));
-                    //CRadar::LimitRadarPoint(radarSpace); // inside range already // returns distance
                     CRadar::TransformRadarPointToScreenSpace(screenSpace, radarSpace);
 
                     int mode = RADAR_TRACE_LOW;
@@ -351,11 +352,12 @@ private:
                     (usj.start1.x + usj.start2.x) / 2.f,
                     (usj.start1.y + usj.start2.y) / 2.f,
                     usj.start1.z);
+
+                CRadar::TransformRealWorldPointToRadarSpace(radarSpace, CVector2D(usjPos));
+                const float mag = CRadar::LimitRadarPoint(radarSpace); // returns distance
                 const float distance = DistanceBetweenPoints(CVector2D(playaPos), CVector2D(usjPos));
-                if (distance < CRadar::m_radarRange)
+                if (mag <= 1.f) // (distance < CRadar::m_radarRange)
                 {
-                    CRadar::TransformRealWorldPointToRadarSpace(radarSpace, CVector2D(usjPos));
-                    //CRadar::LimitRadarPoint(radarSpace); // inside range already // returns distance
                     CRadar::TransformRadarPointToScreenSpace(screenSpace, radarSpace);
 
                     int mode = RADAR_TRACE_LOW;
