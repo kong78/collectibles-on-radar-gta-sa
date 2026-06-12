@@ -8,6 +8,7 @@ public:
     static const std::string MAIN;
     static const std::string COLORS;
     static const std::string EXTRA;
+    static const std::string EXPORTS;
 
     // Default values
 
@@ -48,6 +49,13 @@ public:
     static CRGBA s_colorWeapon;
     static bool s_enabledOnStartup;
     static bool s_drawDroppedWeapons;
+
+    // [EXPORT]
+
+    static bool s_drawExportVehicles;
+    static unsigned short s_exportSpriteId;
+    static int s_exportSpriteSize;
+    static bool s_drawExportArrows;
 
 public:
     static void read();

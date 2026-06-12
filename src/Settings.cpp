@@ -5,6 +5,7 @@
 const std::string Settings::MAIN("MAIN");
 const std::string Settings::COLORS("COLORS");
 const std::string Settings::EXTRA("EXTRA");
+const std::string Settings::EXPORTS("EXPORT");
 
 // Default values
 
@@ -46,6 +47,13 @@ CRGBA Settings::s_colorWeapon(Settings::COLOR_DEFAULT);
 bool Settings::s_enabledOnStartup = true;
 bool Settings::s_drawDroppedWeapons = false;
 
+// [EXPORT]
+
+bool Settings::s_drawExportVehicles = false;
+unsigned short Settings::s_exportSpriteId = 55; // RADAR_SPRITE_IMPOUND
+int Settings::s_exportSpriteSize = 12;
+bool Settings::s_drawExportArrows = true;
+
 void Settings::read() {
     CIniReader iniReader("");
 
@@ -81,6 +89,18 @@ void Settings::read() {
 
     s_enabledOnStartup = iniReader.ReadBoolean(EXTRA, "enabled_on_startup", true);
     s_drawDroppedWeapons = iniReader.ReadBoolean(EXTRA, "draw_dropped_weapons", false);
+
+    // [EXPORT]
+
+    s_drawExportVehicles = iniReader.ReadBoolean(EXPORTS, "show_export_vehicles", false);
+
+    const int spriteId = iniReader.ReadInteger(EXPORTS, "sprite_id", 55);
+    s_exportSpriteId = (spriteId > 0 && spriteId < 63) ? static_cast<unsigned short>(spriteId) : 55;
+
+    const int spriteSize = iniReader.ReadInteger(EXPORTS, "sprite_size", 12);
+    s_exportSpriteSize = (spriteSize >= 4 && spriteSize <= 64) ? spriteSize : 12;
+
+    s_drawExportArrows = iniReader.ReadBoolean(EXPORTS, "show_arrows", true);
 }
 
 unsigned int Settings::toRGBA(const std::string& str, unsigned int defaultValue)

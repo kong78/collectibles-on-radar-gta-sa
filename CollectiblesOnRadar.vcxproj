@@ -21,13 +21,13 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -58,7 +58,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;_USE_MATH_DEFINES;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NDEBUG;GTASA;PLUGIN_SGV_10US;RW;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;$(PLUGIN_SDK_DIR)\plugin_SA;$(PLUGIN_SDK_DIR)\plugin_SA\game_SA;$(PLUGIN_SDK_DIR)\plugin_SA\game_SA\rw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;$(PLUGIN_SDK_DIR)\plugin_SA;$(PLUGIN_SDK_DIR)\plugin_SA\game_SA;$(PLUGIN_SDK_DIR)\plugin_SA\game_SA\rw;$(PLUGIN_SDK_DIR)\plugin_SA\game_SA\enums;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -78,7 +78,8 @@
       <ImportLibrary>output\asi\CollectiblesOnRadar.SA.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>copy /y "$(TargetPath)" "$(GTA_SA_DIR)\scripts\CollectiblesOnRadar.SA.asi"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -86,7 +87,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;_USE_MATH_DEFINES;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;DEBUG;GTASA;PLUGIN_SGV_10US;RW;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;$(PLUGIN_SDK_DIR)\plugin_SA;$(PLUGIN_SDK_DIR)\plugin_SA\game_SA;$(PLUGIN_SDK_DIR)\plugin_SA\game_SA\rw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;$(PLUGIN_SDK_DIR)\plugin_SA;$(PLUGIN_SDK_DIR)\plugin_SA\game_SA;$(PLUGIN_SDK_DIR)\plugin_SA\game_SA\rw;$(PLUGIN_SDK_DIR)\plugin_SA\game_SA\enums;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -100,15 +101,18 @@
       <ImportLibrary>output\asi\CollectiblesOnRadar.SA.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>copy /y "$(TargetPath)" "$(GTA_SA_DIR)\scripts\CollectiblesOnRadar.SA.asi"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Settings.cpp" />
     <ClCompile Include="src\CollectiblesOnRadar.cpp" />
+    <ClCompile Include="src\ExportVehicles.cpp" />
     <ClCompile Include="src\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\ExportVehicles.h" />
     <ClInclude Include="src\IniParser.h" />
     <ClInclude Include="src\IniReader.h" />
     <ClInclude Include="src\Settings.h" />
